@@ -1,0 +1,37 @@
+#ifndef DBSCAN_OPENCV_MAIN_HPP
+#define DBSCAN_OPENCV_MAIN_HPP
+
+
+#include <iostream>
+#include <fstream>
+
+#include <cmath>
+#include <tuple>
+
+#include <string>
+#include <vector>
+#include <list>
+#include <thread>
+#include <algorithm>
+#include <set>
+#include <map>
+
+
+#include <cv.hpp>
+#include <cxcore.hpp>
+#include <highgui.h>
+
+#define UCHAR unsigned char
+#define CHECK(a, b, c, d)  if ( (a) b ){ cout << c << endl; return d;}
+#define CHECK_DO(a, b, c, d)  if ( (a) b ){ cout << c << endl; d;}
+#define DEBUG(a) if (false) {a}
+
+
+using namespace std;
+using namespace cv;
+
+
+RNG rng(12345);
+
+
+#endif //DBSCAN_OPENCV_MAIN_HPP
