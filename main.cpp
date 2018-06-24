@@ -1,6 +1,7 @@
 #include "main.hpp"
 
 
+
 void generate_random_points(vector<Point2f> * point_list){
 
 }
@@ -53,16 +54,69 @@ Mat display_points_with_label(vector<Point2f> * point_list, vector<int> * labels
     return image;
 }
 
+
+vector<int> square_query_range(vector<Point2f> * sorted_point_list, Point2f point, int range){
+    // binary search point
+    unsigned long left, mid, right;
+    left = 0;
+    right = sorted_point_list->size() -1;
+    mid = (left+right)/2;
+    while (left < mid){
+        if (sorted_point_list->at(mid).x < point.x){
+            left = mid;
+        }else if (sorted_point_list->at(mid).x > point.x){
+            right = mid;
+        }else{
+            break;
+        }
+        mid = (left + right)/2;
+    }
+
+    // search left and right to see if the point falls in range
+    //vector<Point2f> result;
+    vector<int> result;
+    auto i = mid;
+    while (sorted_point_list->at(i).x < point.x + range){
+        if ((sorted_point_list->at(i).y < point.y + range) && (sorted_point_list->at(i).y > point.y - range)){
+            //result.push_back(sorted_point_list->at(i));
+            result.push_back(i);
+        }
+        i++;
+    }
+    i = mid;
+    while (sorted_point_list->at(i).x > point.x - range){
+        if ((sorted_point_list->at(i).y < point.y + range) && (sorted_point_list->at(i).y > point.y - range)){
+            //result.push_back(sorted_point_list->at(i));
+            result.push_back(i);
+        }
+        i--;
+    }
+
+    // return all the points
+    return result;
+}
+
+
 int main() {
     vector<Point2f> points;
     vector<int> labels;
 
     load_data_set(&points, &labels);
+    sort(points.begin(), points.end(), [](Point2f a, Point2f b)->bool{
+        return a.x < b.x;
+    });
 
     for (const auto & item: points){
         cout << "(" << item.x << "," << item.y << ")" << endl;
     }
 
+    unsigned long target = 120;
+    auto neighbour_points = square_query_range(&points, points.at(target), 50);
+    cout << "neighbour points" << neighbour_points.size() << endl;
+    for (const auto & item: neighbour_points){
+        labels.at(item) = 23333;
+    }
+    labels.at(target) = 888;
 
     auto display_image = display_points_with_label(&points, &labels);
 
