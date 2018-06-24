@@ -2,6 +2,7 @@
 
 #define CLUSTER_UNDEFINED 0
 #define CLUSTER_NOISE -1
+#define RANGE_QUERY_FUNCTION circle_query_range
 
 ///////////////////////////////////
 // Utility
@@ -9,6 +10,8 @@
 
 void load_data_set(vector<Point2f> * point_list, vector<long> * labels){
     ifstream sample_file("/home/mc/Desktop/container/1/currenttime-11-32-36--224.png.data.txt");
+    //ifstream sample_file("/home/mc/Desktop/container/2/currenttime-11-55-24--629.png.data.txt");
+
     string buffer;
 
     while (sample_file >> buffer){
@@ -93,6 +96,33 @@ vector<unsigned long> square_query_range(vector<Point2f> * sorted_point_list, un
     return result;
 }
 
+vector<unsigned long> circle_query_range(vector<Point2f> * sorted_point_list, unsigned long mid, int range) {
+
+    int range_squred = range * range;
+    vector<unsigned long> result;
+    auto i = mid;
+    while (i < sorted_point_list->size() && sorted_point_list->at(i).x < sorted_point_list->at(mid).x + range){
+        auto delta_x = (sorted_point_list->at(i).x-sorted_point_list->at(mid).x);
+        auto delta_y = (sorted_point_list->at(i).y-sorted_point_list->at(mid).y);
+        if (delta_x * delta_x + delta_y * delta_y < range_squred){
+            result.push_back(i);
+        }
+        i++;
+    }
+    i = mid;
+    while (i > 0 && sorted_point_list->at(i).x > sorted_point_list->at(mid).x - range){
+        auto delta_x = (sorted_point_list->at(i).x-sorted_point_list->at(mid).x);
+        auto delta_y = (sorted_point_list->at(i).y-sorted_point_list->at(mid).y);
+        if (delta_x * delta_x + delta_y * delta_y < range_squred){
+            result.push_back(i);
+        }
+        i--;
+    }
+
+    // return all the points
+    return result;
+}
+
 vector<unsigned long> square_query_range(vector<Point2f> * sorted_point_list, Point2f point, int range) {
     // binary search point
     unsigned long left, mid, right;
@@ -113,17 +143,21 @@ vector<unsigned long> square_query_range(vector<Point2f> * sorted_point_list, Po
 }
 
 
+
 ///////////////////////////////////
 // Algorithm
 ///////////////////////////////////
 
 void density_based_spatial_clustering_of_application_with_noise(vector<Point2f> * sorted_point_list, vector<long> * labels, int range, int density){
+    for (auto & item : *labels){
+        item = CLUSTER_UNDEFINED;
+    }
     long cluster = 0;
     for (unsigned long i = 0; i < sorted_point_list->size(); ++i){
         if (labels->at(i) != CLUSTER_UNDEFINED) {
             continue;
         }
-        auto neighbours = square_query_range(sorted_point_list, i, range);
+        auto neighbours = RANGE_QUERY_FUNCTION(sorted_point_list, i, range);
         if (neighbours.size() < density){
             labels->at(i) = CLUSTER_NOISE;
             continue;
@@ -139,7 +173,7 @@ void density_based_spatial_clustering_of_application_with_noise(vector<Point2f> 
                 continue;
             }
             labels->at(item) = cluster;
-            auto recursive_neighbours = square_query_range(sorted_point_list, item, range);
+            auto recursive_neighbours = RANGE_QUERY_FUNCTION(sorted_point_list, item, range);
             if (recursive_neighbours.size() > density){
                 for (const auto & k : recursive_neighbours){
                     neighbours.push_back(k);
@@ -151,9 +185,20 @@ void density_based_spatial_clustering_of_application_with_noise(vector<Point2f> 
 
 }
 
+int src_range, src_density;
+
+vector<Point2f> points;
+vector<long> labels;
+
+Mat display_image;
+
+void update_image(int a, void * b){
+    density_based_spatial_clustering_of_application_with_noise(&points, &labels, src_range, src_density);
+    display_image = display_points_with_label(&points, &labels);q
+    imshow("test", display_image);
+}
+
 int main() {
-    vector<Point2f> points;
-    vector<long> labels;
 
     load_data_set(&points, &labels);
     sort(points.begin(), points.end(), [](Point2f a, Point2f b)->bool{
@@ -164,17 +209,22 @@ int main() {
         cout << "(" << item.x << "," << item.y << ")" << endl;
     }
 
-    density_based_spatial_clustering_of_application_with_noise(&points, &labels, 300, 100);
-    auto display_image = display_points_with_label(&points, &labels);
+    src_range = 120;
+    src_density = 30;
 
     // Configuration
     namedWindow("test", WINDOW_FREERATIO);
 
     // Display
-    imshow("test", display_image);
+    for(;;) {
+        createTrackbar("src_range", "test", &src_range, 300, update_image);
+        createTrackbar("src_density", "test", &src_density, 300, update_image);
 
-
-    waitKey(0);
+        density_based_spatial_clustering_of_application_with_noise(&points, &labels, src_range, src_density);
+        display_image = display_points_with_label(&points, &labels);
+        imshow("test", display_image);
+        if (waitKey(0) == 'q') break;
+    }
 
     return 0;
 }
