@@ -36,7 +36,7 @@ Mat display_points_with_label(vector<Point2f> * point_list, vector<long> * label
             max_height = (int)item.y;
         }
     }
-    cout << max_height << "x" << max_width << endl;
+    //cout << max_height << "x" << max_width << endl;
 
     Mat image(max_height, max_width, CV_8UC3);
     image = Scalar::all(0);
@@ -194,7 +194,7 @@ Mat display_image;
 
 void update_image(int a, void * b){
     density_based_spatial_clustering_of_application_with_noise(&points, &labels, src_range, src_density);
-    display_image = display_points_with_label(&points, &labels);q
+    display_image = display_points_with_label(&points, &labels);
     imshow("test", display_image);
 }
 
@@ -214,6 +214,22 @@ int main() {
 
     // Configuration
     namedWindow("test", WINDOW_FREERATIO);
+
+    /*
+    unsigned long target = 150;
+    int range = 100;
+    auto point_set = RANGE_QUERY_FUNCTION(&points, target, range);
+    for (const auto & item: point_set){
+        labels.at(item) = 2223;
+    }
+    cout << point_set.size() << endl;
+    labels.at(target) = 10;
+    display_image = display_points_with_label(&points, &labels);
+    circle(display_image, points.at(target),range,Scalar(128,128,255),3);
+    imshow("test", display_image);
+    waitKey(0);
+    return 0;
+    */
 
     // Display
     for(;;) {
